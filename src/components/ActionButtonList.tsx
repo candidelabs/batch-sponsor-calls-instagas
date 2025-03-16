@@ -10,20 +10,21 @@ import { sepolia } from '@reown/appkit/networks'
 // Test transaction
 const TEST_TX = {
   to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045" as Address, // Vitalik's address
-  value: parseGwei('0.0001'),
+  value: parseGwei('0'),
   data: "0x" as Hex,
 };
 
 interface ActionButtonListProps {
   sendHash: (hash: `0x${string}`) => void;
   sendCapabilities: (capabilities: WalletCapabilities) => void
-  sendBalance: (balance: string) => void;
+  sendStatus: (error: string) => void
+  sendError: (error: string) => void
 }
 
 const paymasterUrl = import.meta.env.VITE_PAYMASTER_URL;
 const sponsorshipPolicyId = import.meta.env.VITE_SPONSORSHIP_POLICY_ID;
 
-export const ActionButtonList = ({ sendHash, sendCapabilities }: ActionButtonListProps) => {
+export const ActionButtonList = ({ sendHash, sendCapabilities, sendStatus, sendError }: ActionButtonListProps) => {
   const { disconnect } = useDisconnect(); // AppKit hook to disconnect
   const { open } = useAppKit(); // AppKit hook to open the modal
   const { switchNetwork } = useAppKitNetwork(); // AppKit hook to switch network
@@ -70,9 +71,10 @@ export const ActionButtonList = ({ sendHash, sendCapabilities }: ActionButtonLis
         });
       } else {
         // fallback to regular sendTransactions
-        sendTransaction({ ...TEST_TX });
+        sendTransaction(TEST_TX);
       }
     } catch (err) {
+      sendError(`Error sending transaction:'${err}`)
       console.log('Error sending transaction:', err);
     }
   };
@@ -91,9 +93,12 @@ export const ActionButtonList = ({ sendHash, sendCapabilities }: ActionButtonLis
     if (callStatusData?.status === "CONFIRMED") {
       refetchCallStatus();
       const receipts = callStatusData.receipts;
+      sendStatus(callStatusData.status)
       if (receipts && receipts.length > 0) {
         sendHash(receipts[0].transactionHash);
       }
+    } else if(callStatusData?.status === "PENDING"){
+      sendStatus(callStatusData.status)
     }
   }, [callStatusData?.status, refetchCallStatus, sendHash]);
 
@@ -101,6 +106,7 @@ export const ActionButtonList = ({ sendHash, sendCapabilities }: ActionButtonLis
     try {
       await disconnect();
     } catch (error) {
+      sendError(`Error sending transaction:'${error}`)
       console.error("Failed to disconnect:", error);
     }
   };
