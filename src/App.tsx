@@ -5,11 +5,11 @@ import { useState } from 'react'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ActionButtonList } from './components/ActionButtonList'
-import { SmartContractActionButtonList } from './components/SmartContractActionButtonList'
 import { InfoList } from './components/InfoList'
 import { projectId, metadata, networks, wagmiAdapter } from './config'
 
 import "./App.css"
+import { WalletCapabilities } from 'viem'
 
 const queryClient = new QueryClient()
 
@@ -34,19 +34,19 @@ createAppKit({
 
 export function App() {
   const [transactionHash, setTransactionHash] = useState<`0x${string}` | undefined>(undefined);
-  const [signedMsg, setSignedMsg] = useState('');
   const [balance, setBalance] = useState('');
+  const [capabilities, setCapabilities] = useState<WalletCapabilities | undefined>(undefined);
 
   const receiveHash = (hash: `0x${string}`) => {
     setTransactionHash(hash); // Update the state with the transaction hash
   };
 
-  const receiveSignedMsg = (signedMsg: string) => {
-    setSignedMsg(signedMsg); // Update the state with the transaction hash
-  };
-
   const receivebalance = (balance: string) => {
     setBalance(balance)
+  }
+
+  const receiveCapabilities = (capabilities: WalletCapabilities) => {
+    setCapabilities(capabilities);
   }
 
 
@@ -57,15 +57,14 @@ export function App() {
       <WagmiProvider config={wagmiAdapter.wagmiConfig}>
         <QueryClientProvider client={queryClient}>
             <appkit-button />
-            <ActionButtonList sendHash={receiveHash} sendSignMsg={receiveSignedMsg} sendBalance={receivebalance}/>
-            <SmartContractActionButtonList />
+            <ActionButtonList sendHash={receiveHash} sendBalance={receivebalance} sendCapabilities={receiveCapabilities}/>
             <div className="advice">
               <p>
                 This projectId only works on localhost. <br/>
                 Go to <a href="https://cloud.reown.com" target="_blank" className="link-button" rel="Reown Cloud">Reown Cloud</a> to get your own.
               </p>
             </div>
-            <InfoList hash={transactionHash} signedMsg={signedMsg} balance={balance}/>
+            <InfoList hash={transactionHash} balance={balance} capabilities={capabilities}/>
         </QueryClientProvider>
       </WagmiProvider>
     </div>

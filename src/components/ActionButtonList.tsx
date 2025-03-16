@@ -1,80 +1,101 @@
 import { useEffect } from 'react';
-import { useDisconnect, useAppKit, useAppKitNetwork, useAppKitAccount } from '@reown/appkit/react'
-import { parseGwei, zeroAddress, type Address } from 'viem'
-import { useEstimateGas, useSendTransaction, useSignMessage, useBalance } from 'wagmi'
-import { useSendCalls } from 'wagmi/experimental'
-import { networks } from '../config'
+import { useDisconnect, useAppKit, useAppKitNetwork, useAppKitAccount } from '@reown/appkit/react';
+import { Hex, parseGwei, WalletCapabilities, type Address } from 'viem';
+import { useSendTransaction } from 'wagmi';
+import { useCallsStatus, useSendCalls } from 'wagmi/experimental';
+import { useCapabilities } from 'wagmi/experimental';
+import { sepolia } from '@reown/appkit/networks'
 
-// test transaction
+
+// Test transaction
 const TEST_TX = {
-  to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045" as Address, // vitalik address
-  value: parseGwei('0.0001')
-}
+  to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045" as Address, // Vitalik's address
+  value: parseGwei('0.0001'),
+  data: "0x" as Hex,
+};
 
 interface ActionButtonListProps {
   sendHash: (hash: `0x${string}`) => void;
-  sendSignMsg: (hash: string) => void;
+  sendCapabilities: (capabilities: WalletCapabilities) => void
   sendBalance: (balance: string) => void;
 }
 
 const paymasterUrl = import.meta.env.VITE_PAYMASTER_URL;
 const sponsorshipPolicyId = import.meta.env.VITE_SPONSORSHIP_POLICY_ID;
 
-export const ActionButtonList = ({ sendHash, sendSignMsg, sendBalance }: ActionButtonListProps) => {
+export const ActionButtonList = ({ sendHash, sendCapabilities }: ActionButtonListProps) => {
   const { disconnect } = useDisconnect(); // AppKit hook to disconnect
   const { open } = useAppKit(); // AppKit hook to open the modal
-  const { switchNetwork } = useAppKitNetwork(); // AppKithook to switch network
-  const { address, isConnected } = useAppKitAccount() // AppKit hook to get the address and check if the user is connected
+  const { switchNetwork } = useAppKitNetwork(); // AppKit hook to switch network
+  const { address, isConnected } = useAppKitAccount(); // AppKit hook to get the address and check if the user is connected
 
-  const { data: gas } = useEstimateGas({ ...TEST_TX }); // Wagmi hook to estimate gas
-  const { data: hash, } = useSendTransaction(); // Wagmi hook to send a transaction
-  const { sendCalls } = useSendCalls()
-  const { signMessageAsync } = useSignMessage() // Wagmi hook to sign a message
-  const { refetch } = useBalance({
-    address: address as Address
-  }); // Wagmi hook to get the balance
+  const { data: hash, sendTransaction } = useSendTransaction(); // Wagmi hook to send a transaction
+  const { sendCalls, data: id } = useSendCalls();
+  const { data: capabilities } = useCapabilities({
+    account: address as Address,
+  });
 
   useEffect(() => {
     if (hash) {
       sendHash(hash);
+      console.log("Hash: ", hash)
     }
   }, [hash]);
 
-  console.log(gas, "gas");
+  // Check if capabilities are available
+  useEffect(() => {
+    if(capabilities) {
+      sendCapabilities(capabilities);
+      console.log("capabilities: ", capabilities);
+    }
+  }, [capabilities]);
 
-  // function to send a tx
+
+  // Function to send transactions
   const handleSendTx = () => {
+    // check if capabilities are supported
     try {
-      sendCalls({
-        calls: [
-          { ...TEST_TX, gas }
-        ],
-        capabilities: {
-          paymasterService: {
-            url: paymasterUrl,
-            context: {
-              sponsorshipPolicyId,
+      if (capabilities) {
+        sendCalls({
+          calls: [TEST_TX, TEST_TX],
+          // and sponsor the tx
+          capabilities: {
+            paymasterService: {
+              url: paymasterUrl,
+              context: {
+                sponsorshipPolicyId,
+              }
             }
-          }
-        },
-      })
+          },
+        });
+      } else {
+        // fallback to regular sendTransactions
+        sendTransaction({ ...TEST_TX });
+      }
     } catch (err) {
       console.log('Error sending transaction:', err);
     }
-  }
+  };
 
-  // function to sing a msg 
-  const handleSignMsg = async () => {
-    const msg = "Hello Reown AppKit!" // message to sign
-    const sig = await signMessageAsync({ message: msg, account: address as Address });
-    sendSignMsg(sig);
-  }
+  // get status of sendCalls
+  const { data: callStatusData, refetch: refetchCallStatus } = useCallsStatus({
+    id: id as string,
+    query: {
+      enabled: !!id,
+      refetchInterval: (data) =>
+        data.state.data?.status === "CONFIRMED" ? false : 1000,
+    },
+  });
 
-  // function to get the balance
-  const handleGetBalance = async () => {
-    const balance = await refetch()
-    sendBalance(balance?.data?.value.toString() + " " + balance?.data?.symbol.toString())
-  }
+  useEffect(() => {
+    if (callStatusData?.status === "CONFIRMED") {
+      refetchCallStatus();
+      const receipts = callStatusData.receipts;
+      if (receipts && receipts.length > 0) {
+        sendHash(receipts[0].transactionHash);
+      }
+    }
+  }, [callStatusData?.status, refetchCallStatus, sendHash]);
 
   const handleDisconnect = async () => {
     try {
@@ -84,26 +105,14 @@ export const ActionButtonList = ({ sendHash, sendSignMsg, sendBalance }: ActionB
     }
   };
 
-  // const handeCheckCapabilities = async () => {
-  //   try {
-  //     console.log(result, "result");
-  //   } catch (error) {
-  //     console.error("Failed to disconnect:", error);
-  //   }
-  // };
-
-
   return (
     isConnected && (
-      <div >
+      <div>
         <button onClick={() => open()}>Open</button>
         <button onClick={handleDisconnect}>Disconnect</button>
-        <button onClick={() => switchNetwork(networks[1])}>Switch</button>
-        <button onClick={handleSignMsg}>Sign msg</button>
+        <button onClick={() => switchNetwork(sepolia)}>Switch to Sepolia</button>
         <button onClick={handleSendTx}>Send tx</button>
-        <button onClick={handleGetBalance}>Get Balance</button>
-        {/* <button onClick={() => handeCheckCapabilities()}>Check Capabilities</button> */}
       </div>
     )
-  )
-}
+  );
+};

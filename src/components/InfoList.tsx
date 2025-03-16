@@ -1,25 +1,25 @@
 import { useEffect } from 'react'
 import {
     useAppKitState,
-    useAppKitTheme,
     useAppKitEvents,
     useAppKitAccount,
     useWalletInfo
      } from '@reown/appkit/react'
-import { useWaitForTransactionReceipt } from 'wagmi'
+import { useChainId, useWaitForTransactionReceipt } from 'wagmi'
+import { WalletCapabilities } from 'viem';
 
 interface InfoListProps {
     hash: `0x${string}` | undefined;
-    signedMsg: string;
+    capabilities: WalletCapabilities | undefined;
     balance: string;
 }
 
-export const InfoList = ({ hash, signedMsg, balance }: InfoListProps) => {
-    const kitTheme = useAppKitTheme(); // AppKit hook to get the theme information and theme actions 
+export const InfoList = ({ hash, balance, capabilities }: InfoListProps) => {
     const state = useAppKitState(); // AppKit hook to get the state
     const {address, caipAddress, isConnected, status, embeddedWalletInfo } = useAppKitAccount(); // AppKit hook to get the account information
     const events = useAppKitEvents() // AppKit hook to get the events
     const { walletInfo } = useWalletInfo() // AppKit hook to get the wallet info
+    const chainId = useChainId();
 
     const { data: receipt } = useWaitForTransactionReceipt({ hash, confirmations: 2,  // Wait for at least 2 confirmation
         timeout: 300000,    // Timeout in milliseconds (5 minutes)
@@ -32,7 +32,7 @@ export const InfoList = ({ hash, signedMsg, balance }: InfoListProps) => {
     useEffect(() => {
         console.log("Embedded Wallet Info: ", embeddedWalletInfo);
     }, [embeddedWalletInfo]);
-
+  
   return (
     <>
         {balance && (
@@ -40,20 +40,24 @@ export const InfoList = ({ hash, signedMsg, balance }: InfoListProps) => {
             <h2>Balance: {balance}</h2>
         </section>
         )}
+        {capabilities && (
+            <section>
+                <h2>Capabilities</h2>
+                <pre>
+                    capabilities for chainId: {chainId}<br />
+                <ul>
+                    <li>Paymaster Service Supported: {capabilities[chainId].paymasterService?.supported ? 'Yes' : 'No'}</li>
+                    <li>Auxiliary Funds Supported: {capabilities[chainId].auxiliaryFunds?.supported === 'Yes' || 'No'}</li>
+                </ul>
+                </pre>
+        </section>
+        )}
         {hash && (
         <section>
-            <h2>Sign Tx</h2>
+            <h2>Transaction Hash</h2>
             <pre>
                 Hash: {hash}<br />
                 Status: {receipt?.status.toString()}<br />
-            </pre>
-        </section>
-        )}
-        {signedMsg && (
-        <section>
-            <h2>Sign msg</h2>
-            <pre>
-                signedMsg: {signedMsg}<br />
             </pre>
         </section>
         )}
@@ -68,13 +72,6 @@ export const InfoList = ({ hash, signedMsg, balance }: InfoListProps) => {
                 {embeddedWalletInfo?.user?.email && (`Email: ${embeddedWalletInfo?.user?.email}\n`)}
                 {embeddedWalletInfo?.user?.username && (`Username: ${embeddedWalletInfo?.user?.username}\n`)}
                 {embeddedWalletInfo?.authProvider && (`Provider: ${embeddedWalletInfo?.authProvider}\n`)}
-            </pre>
-        </section>
-
-        <section>
-            <h2>Theme</h2>
-            <pre>
-                Theme: {kitTheme.themeMode}<br />
             </pre>
         </section>
 
