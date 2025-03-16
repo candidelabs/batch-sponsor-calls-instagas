@@ -24,17 +24,23 @@ interface ActionButtonListProps {
 const paymasterUrl = import.meta.env.VITE_PAYMASTER_URL;
 const sponsorshipPolicyId = import.meta.env.VITE_SPONSORSHIP_POLICY_ID;
 
-export const ActionButtonList = ({ sendHash, sendCapabilities, sendStatus, sendError }: ActionButtonListProps) => {
+export const ActionButtonList = ({
+  sendHash,
+  sendCapabilities,
+  sendStatus,
+  sendError
+}: ActionButtonListProps) => {
   const { disconnect } = useDisconnect(); // AppKit hook to disconnect
   const { open } = useAppKit(); // AppKit hook to open the modal
   const { switchNetwork } = useAppKitNetwork(); // AppKit hook to switch network
   const { address, isConnected } = useAppKitAccount(); // AppKit hook to get the address and check if the user is connected
 
-  const { data: hash, sendTransaction } = useSendTransaction(); // Wagmi hook to send a transaction
-  const { sendCalls, data: id } = useSendCalls();
+
   const { data: capabilities } = useCapabilities({
     account: address as Address,
-  });
+  }); // Wagmi hook to check wallet capabilities (for sponsorship)
+  const { sendCalls, data: id } = useSendCalls(); // Wagmi hook to send sponsored and batch transactions
+  const { data: hash, sendTransaction } = useSendTransaction(); // Wagmi hook to send standard transaction
 
   useEffect(() => {
     if (hash) {
@@ -45,7 +51,7 @@ export const ActionButtonList = ({ sendHash, sendCapabilities, sendStatus, sendE
 
   // Check if capabilities are available
   useEffect(() => {
-    if(capabilities) {
+    if (capabilities) {
       sendCapabilities(capabilities);
       console.log("capabilities: ", capabilities);
     }
@@ -54,12 +60,12 @@ export const ActionButtonList = ({ sendHash, sendCapabilities, sendStatus, sendE
 
   // Function to send transactions
   const handleSendTx = () => {
-    // check if capabilities are supported
+    // if smart capabilities are supported, send a sponsored batched transaction
     try {
       if (capabilities) {
         sendCalls({
           calls: [TEST_TX, TEST_TX],
-          // and sponsor the tx
+          // and sponsor the tx, optionally with a sponsorshipPolicyId
           capabilities: {
             paymasterService: {
               url: paymasterUrl,
@@ -70,7 +76,7 @@ export const ActionButtonList = ({ sendHash, sendCapabilities, sendStatus, sendE
           },
         });
       } else {
-        // fallback to regular sendTransactions
+        // if not, fallback to standard sendTransactions
         sendTransaction(TEST_TX);
       }
     } catch (err) {
@@ -90,17 +96,18 @@ export const ActionButtonList = ({ sendHash, sendCapabilities, sendStatus, sendE
   });
 
   useEffect(() => {
-    if (callStatusData?.status === "CONFIRMED") {
+    if (!callStatusData) return;
+
+    sendStatus(callStatusData.status);
+
+    if (callStatusData.status === "CONFIRMED") {
       refetchCallStatus();
       const receipts = callStatusData.receipts;
-      sendStatus(callStatusData.status)
       if (receipts && receipts.length > 0) {
         sendHash(receipts[0].transactionHash);
       }
-    } else if(callStatusData?.status === "PENDING"){
-      sendStatus(callStatusData.status)
     }
-  }, [callStatusData?.status, refetchCallStatus, sendHash]);
+  }, [callStatusData, refetchCallStatus, sendHash, sendStatus]);
 
   const handleDisconnect = async () => {
     try {
