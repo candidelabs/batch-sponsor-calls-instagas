@@ -69,7 +69,9 @@ export function App() {
   return (
     <div className={"pages"}>
       <img src="/candide-instagas-logo.svg" alt="Candide InstaGas" style={{ width: '150px', height: '150px' }} />
-      <h1>Candide InstaGas | AppKit Wagmi sponsored calls example</h1>
+      <h1>Candide InstaGas | Batched and Sponsored Transactions</h1>
+      <h3>Using wagmi/viem</h3>
+
       <WagmiProvider config={wagmiAdapter.wagmiConfig}>
         <QueryClientProvider client={queryClient}>
             <appkit-button />

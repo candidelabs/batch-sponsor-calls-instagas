@@ -10,10 +10,10 @@ if (!projectId) {
 }
 
 export const metadata = {
-    name: 'AppKit',
-    description: 'AppKit Example',
-    url: 'https://reown.com', // origin must match your domain & subdomain
-    icons: ['https://avatars.githubusercontent.com/u/179229932']
+    name: 'Candide InstaGas',
+    description: 'InstaGas Example',
+    url: 'https://candide.dev', // origin must match your domain & subdomain
+    icons: ['https://avatars.githubusercontent.com/u/109539122']
   }
 
 // for custom networks visit -> https://docs.reown.com/appkit/react/core/custom-networks
