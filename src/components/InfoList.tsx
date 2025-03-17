@@ -1,7 +1,4 @@
-import {
-    useAppKitState,
-    useWalletInfo
-     } from '@reown/appkit/react'
+import { useAppKitState } from '@reown/appkit/react'
 import { useChainId, useWaitForTransactionReceipt } from 'wagmi'
 import { WalletCapabilities } from 'viem';
 
@@ -11,10 +8,9 @@ interface InfoListProps {
     status: string;
     error: string;
 }
-
+  
 export const InfoList = ({ hash, capabilities, status, error }: InfoListProps) => {
     const state = useAppKitState(); // AppKit hook to get the state
-    const { walletInfo } = useWalletInfo() // AppKit hook to get the wallet info
     const chainId = useChainId();
 
     const { data: receipt } = useWaitForTransactionReceipt({ hash, confirmations: 2,  // Wait for at least 2 confirmation
@@ -23,7 +19,7 @@ export const InfoList = ({ hash, capabilities, status, error }: InfoListProps) =
   
   return (
     <>
-        {hash && (
+        {(status || hash) && (
         <section>
             <h2>Transaction Hash</h2>
             <pre>
@@ -49,12 +45,12 @@ export const InfoList = ({ hash, capabilities, status, error }: InfoListProps) =
             <br/>      
             <b>Capabilities for chainId {chainId}:</b>
             <br />
-            {capabilities && (
+            {capabilities ? (
                 <ul>
                     <li>Paymaster Service Supported: {capabilities[chainId].paymasterService?.supported ? 'Yes' : 'No'}</li>
                     <li>Auxiliary Funds Supported: {capabilities[chainId].auxiliaryFunds?.supported === 'Yes' || 'No'}</li>
                 </ul>
-            )}
+            ) : "undefined"}
             </pre>
     </section>
 
@@ -65,13 +61,6 @@ export const InfoList = ({ hash, capabilities, status, error }: InfoListProps) =
                 loading: {state.loading.toString()}<br />
                 open: {state.open.toString()}<br />
                 selectedNetworkId: {state.selectedNetworkId?.toString()}<br />
-            </pre>
-        </section>
-
-        <section>
-            <h2>WalletInfo</h2>
-            <pre>
-                Name: {JSON.stringify(walletInfo)}<br />
             </pre>
         </section>
     </>

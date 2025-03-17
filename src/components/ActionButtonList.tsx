@@ -1,10 +1,9 @@
 import { useEffect } from 'react';
-import { useDisconnect, useAppKit, useAppKitNetwork, useAppKitAccount } from '@reown/appkit/react';
+import { useDisconnect, useAppKit, useAppKitAccount } from '@reown/appkit/react';
 import { Hex, parseGwei, WalletCapabilities, type Address } from 'viem';
-import { useSendTransaction } from 'wagmi';
+import { useChainId, useSendTransaction } from 'wagmi';
 import { useCallsStatus, useSendCalls } from 'wagmi/experimental';
 import { useCapabilities } from 'wagmi/experimental';
-import { sepolia } from '@reown/appkit/networks'
 
 
 // Test transaction
@@ -21,8 +20,18 @@ interface ActionButtonListProps {
   sendError: (error: string) => void
 }
 
-const paymasterUrl = import.meta.env.VITE_PAYMASTER_URL;
-const sponsorshipPolicyId = import.meta.env.VITE_SPONSORSHIP_POLICY_ID;
+const chainIdToNetwork = {
+  84532: 'base-sepolia',
+  137: 'polygon',
+};
+
+const chainIdToSponsorshipPolicyId = {
+  84532: import.meta.env.VITE_BASE_SEPOLIA_SPONSORSHIP_POLICY_ID,
+  137: import.meta.env.VITE_POLYGON_SPONSORSHIP_POLICY_ID,
+};
+
+const candideApiKey = import.meta.env.VITE_CANDIDE_APY_KEY
+const candidePaymasterVersion = "v-3";
 
 export const ActionButtonList = ({
   sendHash,
@@ -30,11 +39,15 @@ export const ActionButtonList = ({
   sendStatus,
   sendError
 }: ActionButtonListProps) => {
+  const chainId = useChainId() as keyof typeof chainIdToNetwork;
+  
+  const sponsorshipPolicyId = chainIdToSponsorshipPolicyId[chainId];
+  const paymasterUrl = `https://api.candide.dev/paymaster/${candidePaymasterVersion}/${chainIdToNetwork[chainId]}/${candideApiKey}`;
+
   const { disconnect } = useDisconnect(); // AppKit hook to disconnect
   const { open } = useAppKit(); // AppKit hook to open the modal
-  const { switchNetwork } = useAppKitNetwork(); // AppKit hook to switch network
   const { address, isConnected } = useAppKitAccount(); // AppKit hook to get the address and check if the user is connected
-
+  
 
   const { data: capabilities } = useCapabilities({
     account: address as Address,
@@ -51,11 +64,11 @@ export const ActionButtonList = ({
 
   // Check if capabilities are available
   useEffect(() => {
-    if (capabilities) {
+    if (capabilities && address && chainId) {
       sendCapabilities(capabilities);
       console.log("capabilities: ", capabilities);
     }
-  }, [capabilities]);
+  }, [capabilities, address, chainId]);
 
 
   // Function to send transactions
@@ -97,7 +110,7 @@ export const ActionButtonList = ({
 
   useEffect(() => {
     if (!callStatusData) return;
-
+    
     sendStatus(callStatusData.status);
 
     if (callStatusData.status === "CONFIRMED") {
@@ -123,7 +136,6 @@ export const ActionButtonList = ({
       <div>
         <button onClick={() => open()}>Open</button>
         <button onClick={handleDisconnect}>Disconnect</button>
-        <button onClick={() => switchNetwork(sepolia)}>Switch to Sepolia</button>
         <button onClick={handleSendTx}>Send tx</button>
       </div>
     )
