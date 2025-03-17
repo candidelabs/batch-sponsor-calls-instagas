@@ -1,6 +1,6 @@
 # Candide InstaGas | AppKit sponsored calls example using wagmi (Vite + React)
 
-This is a [Vite](https://vitejs.dev) project together with React.
+This example dapp follows EIP-5792 for batch calls and EIP-7677 for gas sponsorship
 
 ## Usage
 
