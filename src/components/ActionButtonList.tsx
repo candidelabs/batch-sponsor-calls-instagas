@@ -31,7 +31,7 @@ const chainIdToSponsorshipPolicyId = {
 };
 
 const candideApiKey = import.meta.env.VITE_CANDIDE_APY_KEY
-const candidePaymasterVersion = "v-3";
+const candidePaymasterVersion = "v3";
 
 export const ActionButtonList = ({
   sendHash,
