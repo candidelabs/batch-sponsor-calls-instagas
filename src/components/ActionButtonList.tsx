@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDisconnect, useAppKit, useAppKitAccount } from '@reown/appkit/react';
-import { Hex, parseGwei, WalletCapabilities, type Address } from 'viem';
+import { Hex, parseGwei, toHex, WalletCapabilities, type Address } from 'viem';
 import { useChainId, useSendTransaction } from 'wagmi';
 import { useCallsStatus, useSendCalls } from 'wagmi/experimental';
 import { useCapabilities } from 'wagmi/experimental';
@@ -49,7 +49,6 @@ export const ActionButtonList = ({
   const { disconnect } = useDisconnect(); // AppKit hook to disconnect
   const { open } = useAppKit(); // AppKit hook to open the modal
   const { address, isConnected } = useAppKitAccount(); // AppKit hook to get the address and check if the user is connected
-  
 
   const { data: capabilities } = useCapabilities({
     account: address as Address,
@@ -83,9 +82,11 @@ export const ActionButtonList = ({
           // and sponsor the tx, optionally with a sponsorshipPolicyId
           capabilities: {
             paymasterService: {
-              url: paymasterUrl,
-              context: {
-                sponsorshipPolicyId,
+              [toHex(chainId)]: {
+                url: paymasterUrl,
+                context: {
+                  sponsorshipPolicyId: sponsorshipPolicyId,
+                }
               }
             }
           },
