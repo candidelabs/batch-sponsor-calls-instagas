@@ -23,11 +23,13 @@ interface ActionButtonListProps {
 const chainIdToNetwork = {
   84532: 'base-sepolia',
   137: 'polygon',
+  11155111: 'sepolia',
 };
 
 const chainIdToSponsorshipPolicyId = {
   84532: import.meta.env.VITE_BASE_SEPOLIA_SPONSORSHIP_POLICY_ID,
   137: import.meta.env.VITE_POLYGON_SPONSORSHIP_POLICY_ID,
+  11155111: import.meta.env.VITE_SEPOLIA_SPONSORSHIP_POLICY_ID
 };
 
 const candideApiKey = import.meta.env.VITE_CANDIDE_APY_KEY
