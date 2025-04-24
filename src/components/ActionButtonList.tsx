@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
 import { useDisconnect, useAppKit, useAppKitAccount } from '@reown/appkit/react';
 import { Hex, parseGwei, toHex, WalletCapabilities, type Address } from 'viem';
-import { useChainId, useSendTransaction } from 'wagmi';
-import { useCallsStatus, useSendCalls } from 'wagmi/experimental';
-import { useCapabilities } from 'wagmi/experimental';
-
+import {
+  useChainId,
+  useSendTransaction,
+  useSendCalls,
+  useCallsStatus,
+  useCapabilities
+} from 'wagmi';
 
 // Test transaction
 const TEST_TX = {
@@ -16,7 +19,7 @@ const TEST_TX = {
 interface ActionButtonListProps {
   sendHash: (hash: `0x${string}`) => void;
   sendCapabilities: (capabilities: WalletCapabilities) => void
-  sendStatus: (error: string) => void
+  sendStatus: (error: string | undefined) => void
   sendError: (error: string) => void
 }
 
@@ -42,7 +45,7 @@ export const ActionButtonList = ({
   sendError
 }: ActionButtonListProps) => {
   const chainId = useChainId() as keyof typeof chainIdToNetwork;
-  
+
   const sponsorshipPolicyId = chainIdToSponsorshipPolicyId[chainId];
   const paymasterUrl = `https://api.candide.dev/paymaster/${candidePaymasterVersion}/${chainIdToNetwork[chainId]}/${candideApiKey}`;
 
@@ -103,11 +106,11 @@ export const ActionButtonList = ({
 
   // get status of sendCalls
   const { data: callStatusData, refetch: refetchCallStatus } = useCallsStatus({
-    id: id as string,
+    id: id?.id || '',
     query: {
       enabled: !!id,
       refetchInterval: (data) =>
-        data.state.data?.status === "CONFIRMED" ? false : 1000,
+        data.state.data?.status === "success" ? false : 1000,
     },
   });
 
@@ -116,7 +119,7 @@ export const ActionButtonList = ({
     
     sendStatus(callStatusData.status);
 
-    if (callStatusData.status === "CONFIRMED") {
+    if (callStatusData.status === "success") {
       refetchCallStatus();
       const receipts = callStatusData.receipts;
       if (receipts && receipts.length > 0) {
