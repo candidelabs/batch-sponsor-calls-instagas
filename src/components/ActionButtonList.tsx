@@ -87,6 +87,7 @@ export const ActionButtonList = ({
             paymasterService: {
               [toHex(chainId)]: {
                 url: paymasterUrl,
+                optional: true,
                 context: {
                   sponsorshipPolicyId: sponsorshipPolicyId,
                 }
