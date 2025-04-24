@@ -30,4 +30,4 @@ This example dapp follows EIP-5792 for batch calls and EIP-7677 for gas sponsors
 ## Resources
 
 - [Candide — Gas Policies](https://docs.candide.dev/instagas/gas-policies)
-- [EIP-5972 using viem](https://viem.sh/experimental/eip5792/client#extending-client-with-eip-5792)
+- [EIP-5972 using viem](https://viem.sh/docs/actions/wallet/sendCalls#sendcalls)
