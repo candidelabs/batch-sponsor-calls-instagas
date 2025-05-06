@@ -28,6 +28,6 @@ This example dapp follows EIP-5792 for batch calls and EIP-7677 for gas sponsors
 5. Run `pnpm run dev` to start the development server.
 
 ## Resources
-
+- [Batch & Sponsor docs](https://docs.candide.dev/instagas/batch-sponsor-transactions/)
 - [Candide — Gas Policies](https://docs.candide.dev/instagas/gas-policies)
 - [EIP-5972 using viem](https://viem.sh/docs/actions/wallet/sendCalls#sendcalls)
