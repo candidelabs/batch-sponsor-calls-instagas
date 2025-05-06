@@ -1,11 +1,11 @@
 import { useAppKitState } from '@reown/appkit/react'
 import { useChainId, useWaitForTransactionReceipt } from 'wagmi'
-import { WalletCapabilities } from 'viem';
+import type { Capabilities } from 'viem';
 
 interface InfoListProps {
     hash: `0x${string}` | undefined;
-    capabilities: WalletCapabilities | undefined;
-    status: string;
+    capabilities: Capabilities | undefined;
+    status: string | undefined;
     error: string;
 }
   

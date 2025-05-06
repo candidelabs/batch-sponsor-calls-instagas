@@ -1,15 +1,14 @@
-import { createAppKit, useAppKitAccount } from '@reown/appkit/react'
-
-import { WagmiProvider } from 'wagmi'
 import { useEffect, useState } from 'react'
-
+import { createAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { WagmiProvider } from 'wagmi'
+import type { Capabilities } from 'viem';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
 import { ActionButtonList } from './components/ActionButtonList'
 import { InfoList } from './components/InfoList'
 import { projectId, metadata, networks, wagmiAdapter } from './config'
 
 import "./App.css"
-import { WalletCapabilities } from 'viem'
 
 const queryClient = new QueryClient()
 
@@ -34,9 +33,9 @@ createAppKit({
 
 export function App() {
   const [transactionHash, setTransactionHash] = useState<`0x${string}` | undefined>(undefined);
-  const [capabilities, setCapabilities] = useState<WalletCapabilities | undefined>(undefined);
+  const [capabilities, setCapabilities] = useState<Capabilities | undefined>(undefined);
   const [error, setError] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<string | undefined>('');
 
   const account = useAppKitAccount();
 
@@ -54,7 +53,7 @@ export function App() {
     setTransactionHash(hash); // Update the state with the transaction hash
   };
 
-  const receiveCapabilities = (capabilities: WalletCapabilities) => {
+  const receiveCapabilities = (capabilities: Capabilities) => {
     setCapabilities(capabilities);
   }
 
@@ -62,7 +61,7 @@ export function App() {
     setError(error);
   }
 
-  const receiveStatus = (status: string) => {
+  const receiveStatus = (status: string | undefined) => {
     setStatus(status);
   }
 

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDisconnect, useAppKit, useAppKitAccount } from '@reown/appkit/react';
-import { Hex, parseGwei, toHex, WalletCapabilities, type Address } from 'viem';
+import { Hex, parseGwei, toHex, type Address, Capabilities } from 'viem';
 import {
   useChainId,
   useSendTransaction,
@@ -18,8 +18,8 @@ const TEST_TX = {
 
 interface ActionButtonListProps {
   sendHash: (hash: `0x${string}`) => void;
-  sendCapabilities: (capabilities: WalletCapabilities) => void
-  sendStatus: (error: string | undefined) => void
+  sendCapabilities: (capabilities: Capabilities) => void
+  sendStatus: (status: string | undefined) => void
   sendError: (error: string) => void
 }
 
