@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDisconnect, useAppKit, useAppKitAccount } from '@reown/appkit/react';
-import { Hex, parseGwei, toHex, type Address, Capabilities } from 'viem';
+import { Hex, parseGwei, toHex, type Address, Capabilities, zeroAddress } from 'viem';
 import {
   useChainId,
   useSendTransaction,
@@ -11,9 +11,9 @@ import {
 
 // Test transaction
 const TEST_TX = {
-  to: "0xd8da6bf26964af9d7eed9e03e53415d37aa96045" as Address, // Vitalik's address
+  to: zeroAddress as Address,
   value: parseGwei('0'),
-  data: "0x" as Hex,
+  data: zeroAddress as Hex,
 };
 
 interface ActionButtonListProps {
@@ -26,11 +26,13 @@ interface ActionButtonListProps {
 const chainIdToNetwork = {
   84532: 'base-sepolia',
   11155111: 'sepolia',
+  10: 'optimism',
 };
 
 const chainIdToSponsorshipPolicyId = {
   84532: import.meta.env.VITE_BASE_SEPOLIA_SPONSORSHIP_POLICY_ID,
-  11155111: import.meta.env.VITE_SEPOLIA_SPONSORSHIP_POLICY_ID
+  11155111: import.meta.env.VITE_SEPOLIA_SPONSORSHIP_POLICY_ID,
+  10: import.meta.env.VITE_OPTIMISM_SPONSORSHIP_POLICY_ID,
 };
 
 const candideApiKey = import.meta.env.VITE_CANDIDE_APY_KEY
@@ -78,21 +80,29 @@ export const ActionButtonList = ({
     // if smart capabilities are supported, send a sponsored batched transaction
     try {
       if (capabilities) {
-        sendCalls({
-          calls: [TEST_TX, TEST_TX],
-          // and sponsor the tx, optionally with a sponsorshipPolicyId
-          capabilities: {
-            paymasterService: {
-              [toHex(chainId)]: {
-                url: paymasterUrl,
-                optional: true,
-                context: {
-                  sponsorshipPolicyId: sponsorshipPolicyId,
+        if (capabilities[chainId].atomic?.status == "supported" || "ready") {
+          if (capabilities[chainId].paymasterService?.supported) {
+            sendCalls({
+              calls: [TEST_TX, TEST_TX],
+              // and sponsor the tx, optionally with a sponsorshipPolicyId
+              capabilities: {
+                paymasterService: {
+                  [toHex(chainId)]: {
+                    url: paymasterUrl,
+                    optional: true,
+                    context: {
+                      sponsorshipPolicyId: sponsorshipPolicyId,
+                    }
+                  }
                 }
-              }
-            }
-          },
-        });
+              },
+            });
+          } else {
+            sendCalls({
+              calls: [TEST_TX, TEST_TX],
+            });
+          }
+        }
       } else {
         // if not, fallback to standard sendTransactions
         sendTransaction(TEST_TX);
@@ -115,7 +125,7 @@ export const ActionButtonList = ({
 
   useEffect(() => {
     if (!callStatusData) return;
-    
+
     sendStatus(callStatusData.status);
 
     if (callStatusData.status === "success") {
