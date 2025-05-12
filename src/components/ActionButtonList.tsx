@@ -10,7 +10,7 @@ import {
 } from 'wagmi';
 
 // Test transaction
-const TEST_TX = {
+const tx = {
   to: zeroAddress as Address,
   value: parseGwei('0'),
   data: zeroAddress as Hex,
@@ -81,33 +81,41 @@ export const ActionButtonList = ({
   const handleSendTx = () => {
     // if smart capabilities are supported, send a sponsored batched transaction
     try {
-      if (capabilities) {
-        if (capabilities[chainId].atomic?.status == "supported" || "ready") {
-          if (capabilities[chainId].paymasterService?.supported) {
-            sendCalls({
-              calls: [TEST_TX, TEST_TX],
-              // and sponsor the tx, optionally with a sponsorshipPolicyId
-              capabilities: {
-                paymasterService: {
-                  [toHex(chainId)]: {
-                    url: paymasterUrl,
-                    optional: true,
-                    context: {
-                      sponsorshipPolicyId: sponsorshipPolicyId,
-                    }
+      if (!capabilities) {
+        // Fallback to standard sendTransactions if capabilities are not available
+        sendTransaction(tx);
+        return;
+      }
+
+      const atomicStatus = capabilities[chainId].atomic?.status;
+      const isAtomicSupported = atomicStatus === "supported" || atomicStatus === "ready";
+      const isPaymasterSupported = capabilities[chainId].paymasterService?.supported;
+
+      if (isAtomicSupported) {
+        if (isPaymasterSupported) {
+          sendCalls({
+            calls: [tx, tx],
+            // and sponsor the tx, optionally with a sponsorshipPolicyId
+            capabilities: {
+              paymasterService: {
+                [toHex(chainId)]: {
+                  url: paymasterUrl,
+                  optional: true,
+                  context: {
+                    sponsorshipPolicyId,
                   }
                 }
-              },
-            });
-          } else {
-            sendCalls({
-              calls: [TEST_TX, TEST_TX],
-            });
-          }
+              }
+            },
+          });
+        } else {
+          sendCalls({
+            calls: [tx, tx],
+          });
         }
       } else {
         // if not, fallback to standard sendTransactions
-        sendTransaction(TEST_TX);
+        sendTransaction(tx);
       }
     } catch (err) {
       sendError(`Error sending transaction:'${err}`)
