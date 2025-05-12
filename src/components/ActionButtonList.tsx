@@ -24,12 +24,14 @@ interface ActionButtonListProps {
 }
 
 const chainIdToNetwork = {
+  1: 'ethereum',
   84532: 'base-sepolia',
   11155111: 'sepolia',
   10: 'optimism',
 };
 
 const chainIdToSponsorshipPolicyId = {
+  1: import.meta.env.VITE_ETHEREUM_SPONSORSHIP_POLICY_ID,
   84532: import.meta.env.VITE_BASE_SEPOLIA_SPONSORSHIP_POLICY_ID,
   11155111: import.meta.env.VITE_SEPOLIA_SPONSORSHIP_POLICY_ID,
   10: import.meta.env.VITE_OPTIMISM_SPONSORSHIP_POLICY_ID,
