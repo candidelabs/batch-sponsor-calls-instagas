@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDisconnect, useAppKit, useAppKitAccount } from '@reown/appkit/react';
-import { Hex, parseGwei, toHex, type Address, Capabilities, zeroAddress } from 'viem';
+import { Hex, parseGwei, type Address, Capabilities, zeroAddress } from 'viem';
 import {
   useChainId,
   useSendTransaction,
@@ -89,30 +89,21 @@ export const ActionButtonList = ({
 
       const atomicStatus = capabilities[chainId].atomic?.status;
       const isAtomicSupported = atomicStatus === "supported" || atomicStatus === "ready";
-      const isPaymasterSupported = capabilities[chainId].paymasterService?.supported;
 
       if (isAtomicSupported) {
-        if (isPaymasterSupported) {
-          sendCalls({
-            calls: [tx, tx],
-            // and sponsor the tx, optionally with a sponsorshipPolicyId
-            capabilities: {
-              paymasterService: {
-                [toHex(chainId)]: {
-                  url: paymasterUrl,
-                  optional: true,
-                  context: {
-                    sponsorshipPolicyId,
-                  }
-                }
+        sendCalls({
+          calls: [tx, tx],
+          // and sponsor the tx, optionally with a sponsorshipPolicyId
+          capabilities: {
+            paymasterService: {
+              url: paymasterUrl,
+              optional: true,
+              context: {
+                sponsorshipPolicyId,
               }
-            },
-          });
-        } else {
-          sendCalls({
-            calls: [tx, tx],
-          });
-        }
+            }
+          },
+        });
       } else {
         // if not, fallback to standard sendTransactions
         sendTransaction(tx);
